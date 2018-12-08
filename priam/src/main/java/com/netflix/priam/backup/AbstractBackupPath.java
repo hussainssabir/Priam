@@ -61,7 +61,7 @@ public abstract class AbstractBackupPath implements Comparable<AbstractBackupPat
     protected String columnFamily;
     protected String fileName;
     protected String baseDir;
-    protected String token;
+    protected String nodeIdentifier;
     protected String region;
     protected Date time;
     private long size; // uncompressed file size
@@ -122,7 +122,7 @@ public abstract class AbstractBackupPath implements Comparable<AbstractBackupPat
         this.clusterName = config.getAppName();
         this.baseDir = config.getBackupLocation();
         this.region = instanceIdentity.getInstanceInfo().getRegion();
-        this.token = instanceIdentity.getInstance().getToken();
+        this.nodeIdentifier = instanceIdentity.getBackupIdentifier();
         this.type = type;
         if (BackupFileType.isDataFile(type)) {
             this.keyspace = elements[0];
@@ -219,8 +219,8 @@ public abstract class AbstractBackupPath implements Comparable<AbstractBackupPat
         return baseDir;
     }
 
-    public String getToken() {
-        return token;
+    public String getNodeIdentifier() {
+        return nodeIdentifier;
     }
 
     public String getRegion() {

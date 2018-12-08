@@ -69,11 +69,10 @@ public class CassandraConfig {
     @Path("/get_token")
     public Response getToken() {
         try {
-            String token = priamServer.getInstanceIdentity().getInstance().getToken();
+            String token = priamServer.getInstanceIdentity().getToken();
             if (StringUtils.isNotBlank(token)) {
                 logger.info("Returning token value \"{}\" for this instance to caller.", token);
-                return Response.ok(priamServer.getInstanceIdentity().getInstance().getToken())
-                        .build();
+                return Response.ok(priamServer.getInstanceIdentity().getToken()).build();
             }
 
             logger.error("Cannot find token for this instance.");
@@ -83,6 +82,21 @@ public class CassandraConfig {
             return Response.serverError().build();
         }
         return Response.status(500).build();
+    }
+
+    @GET
+    @Path("/is_externally_defined_token")
+    public Response isExternallyDefinedToken() {
+        try {
+            return Response.ok(
+                            String.valueOf(
+                                    priamServer.getInstanceIdentity().isExternallyDefinedToken()))
+                    .build();
+        } catch (Exception e) {
+            // TODO: can this ever happen? if so, what conditions would cause an exception here?
+            logger.error("Error while executing is_replace_token", e);
+            return Response.serverError().build();
+        }
     }
 
     @GET

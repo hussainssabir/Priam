@@ -59,7 +59,7 @@ public class NewTokenRetriever extends TokenRetrieverBase implements INewTokenRe
     @Override
     public PriamInstance get() throws Exception {
 
-        logger.info("Generating my own and new token");
+        logger.info("Generating my own and grabbing new identifier");
         // Sleep random interval - upto 15 sec
         sleeper.sleep(new Random().nextInt(15000));
         int hash = tokenManager.regionOffset(instanceInfo.getRegion());
@@ -86,27 +86,31 @@ public class NewTokenRetriever extends TokenRetrieverBase implements INewTokenRe
             my_slot = idx + maxSlot;
         } else my_slot = config.getRacs().size() + maxSlot;
 
-        logger.info(
-                "Trying to createToken with slot {} with rac count {} with rac membership size {} with dc {}",
-                my_slot,
-                membership.getRacCount(),
-                membership.getRacMembershipSize(),
-                instanceInfo.getRegion());
-        String payload =
-                tokenManager.createToken(
-                        my_slot,
-                        membership.getRacCount(),
-                        membership.getRacMembershipSize(),
-                        instanceInfo.getRegion());
+        int identifier = my_slot + hash;
+        String token = null;
+        if (config.getNumTokens() == 1) {
+            logger.info(
+                    "Trying to createToken with slot {} with rac count {} with rac membership size {} with dc {}",
+                    my_slot,
+                    membership.getRacCount(),
+                    membership.getRacMembershipSize(),
+                    instanceInfo.getRegion());
+            token =
+                    tokenManager.createToken(
+                            my_slot,
+                            membership.getRacCount(),
+                            membership.getRacMembershipSize(),
+                            instanceInfo.getRegion());
+        }
         return factory.create(
                 config.getAppName(),
-                my_slot + hash,
+                identifier,
                 instanceInfo.getInstanceId(),
                 instanceInfo.getHostname(),
                 instanceInfo.getHostIP(),
                 instanceInfo.getRac(),
                 null,
-                payload);
+                token);
     }
 
     /*

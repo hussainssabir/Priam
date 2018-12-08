@@ -304,10 +304,10 @@ public class BackupServlet {
                 backupJSON.put("filename", p.getRemotePath());
                 backupJSON.put("app", p.getClusterName());
                 backupJSON.put("region", p.getRegion());
-                backupJSON.put("token", p.getToken());
+                backupJSON.put("token", p.getNodeIdentifier());
+                backupJSON.put("nodeIdentifier", p.getNodeIdentifier());
                 backupJSON.put("ts", DateUtil.formatyyyyMMddHHmm(p.getTime()));
-                backupJSON.put(
-                        "instance_id", p.getInstanceIdentity().getInstance().getInstanceId());
+                backupJSON.put("instance_id", p.getInstanceIdentity().getInstanceId());
                 backupJSON.put("uploaded_ts", DateUtil.formatyyyyMMddHHmm(p.getUploadedTs()));
                 if ("meta".equalsIgnoreCase(filter)) { // only check for existence of meta file
                     p.setFileName(

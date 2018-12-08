@@ -49,7 +49,7 @@ public class TestFileIterator {
     private static AmazonS3Client s3client;
 
     private static IConfiguration conf;
-    private static InstanceIdentity factory;
+    private static InstanceIdentity instanceIdentity;
     private static String region;
 
     @BeforeClass
@@ -59,8 +59,8 @@ public class TestFileIterator {
 
         injector = Guice.createInjector(new BRTestModule());
         conf = injector.getInstance(IConfiguration.class);
-        factory = injector.getInstance(InstanceIdentity.class);
-        region = factory.getInstanceInfo().getRegion();
+        instanceIdentity = injector.getInstance(InstanceIdentity.class);
+        region = instanceIdentity.getInstanceInfo().getRegion();
 
         cal = Calendar.getInstance();
         cal.set(2011, 7, 11, 0, 30, 0);
@@ -138,7 +138,7 @@ public class TestFileIterator {
                         + "/"
                         + conf.getAppName()
                         + "/"
-                        + factory.getInstance().getToken();
+                        + instanceIdentity.getBackupIdentifier();
         MockAmazonS3Client.prefix += "/20110811";
 
         S3FileIterator fileIterator =
@@ -166,7 +166,7 @@ public class TestFileIterator {
                         + "/"
                         + conf.getAppName()
                         + "/"
-                        + factory.getInstance().getToken();
+                        + instanceIdentity.getBackupIdentifier();
         MockAmazonS3Client.prefix += "/20110811";
 
         S3FileIterator fileIterator =
@@ -214,7 +214,7 @@ public class TestFileIterator {
                         + "/"
                         + conf.getAppName()
                         + "/"
-                        + factory.getInstance().getToken();
+                        + instanceIdentity.getBackupIdentifier();
         MockAmazonS3Client.prefix += "/20110811";
 
         S3FileIterator fileIterator =
@@ -278,7 +278,7 @@ public class TestFileIterator {
                         + "/"
                         + conf.getAppName()
                         + "/"
-                        + factory.getInstance().getToken();
+                        + instanceIdentity.getBackupIdentifier();
         MockAmazonS3Client.prefix += "/20110811";
 
         S3FileIterator fileIterator =
@@ -338,7 +338,7 @@ public class TestFileIterator {
         MockAmazonS3Client.prefix =
                 "test_restore_backup/fake-restore-region/fakerestorecluster"
                         + "/"
-                        + factory.getInstance().getToken();
+                        + instanceIdentity.getBackupIdentifier();
         MockAmazonS3Client.prefix += "/20110811";
 
         S3FileIterator fileIterator =
