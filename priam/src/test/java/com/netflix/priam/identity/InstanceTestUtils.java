@@ -15,10 +15,9 @@
  *
  */
 
-package com.netflix.priam.backup.identity;
+package com.netflix.priam.identity;
 
 import com.netflix.priam.config.FakeConfiguration;
-import com.netflix.priam.identity.*;
 import com.netflix.priam.identity.config.FakeInstanceInfo;
 import com.netflix.priam.identity.config.InstanceInfo;
 import com.netflix.priam.identity.token.*;

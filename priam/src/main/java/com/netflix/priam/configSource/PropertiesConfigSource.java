@@ -55,8 +55,8 @@ public class PropertiesConfigSource extends AbstractConfigSource {
     }
 
     @Override
-    public void initialize(final String asgName, final String region) {
-        super.initialize(asgName, region);
+    public void initialize(final String appid, final String region) {
+        super.initialize(appid, region);
         Properties properties = new Properties();
         URL url = PropertiesConfigSource.class.getClassLoader().getResource(priamFile);
         if (url != null) {

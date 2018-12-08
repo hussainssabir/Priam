@@ -19,6 +19,7 @@ package com.netflix.priam.identity;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import com.netflix.priam.config.IConfiguration;
+import com.netflix.priam.identity.token.TokenRetrieverBase;
 import com.netflix.priam.utils.ITokenManager;
 import java.io.*;
 import java.util.List;
@@ -87,7 +88,7 @@ public class DoubleRing {
             factory.create(
                     data.getApp(),
                     new_slot + hash,
-                    InstanceIdentity.DUMMY_INSTANCE_ID,
+                    TokenRetrieverBase.DUMMY_INSTANCE_ID,
                     instanceIdentity.getInstanceInfo().getHostname(),
                     instanceIdentity.getInstanceInfo().getHostIP(),
                     data.getRac(),

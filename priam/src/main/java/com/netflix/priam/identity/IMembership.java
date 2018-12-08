@@ -17,7 +17,7 @@
 package com.netflix.priam.identity;
 
 import com.google.inject.ImplementedBy;
-import com.netflix.priam.aws.AWSMembership;
+import com.netflix.priam.aws.AbstractAWSMembership;
 import java.util.Collection;
 import java.util.List;
 
@@ -25,24 +25,18 @@ import java.util.List;
  * Interface to manage membership meta information such as size of RAC, list of nodes in RAC etc.
  * Also perform ACL updates used in multi-regional clusters
  */
-@ImplementedBy(AWSMembership.class)
+@ImplementedBy(AbstractAWSMembership.class)
 public interface IMembership {
+
     /**
-     * Get a list of Instances in the current RAC
+     * Determines if the provided instance is alive
      *
      * @return
      */
-    List<String> getRacMembership();
+    public boolean isInstanceAlive(PriamInstance instance);
 
     /** @return Size of current RAC */
-    int getRacMembershipSize();
-
-    /**
-     * Get a list of Instances in the cross-account but current RAC
-     *
-     * @return
-     */
-    List<String> getCrossAccountRacMembership();
+    public int getRacMembershipSize();
 
     /**
      * Number of RACs
@@ -75,11 +69,4 @@ public interface IMembership {
      * @return
      */
     List<String> listACL(int from, int to);
-
-    /**
-     * Expand the membership size by 1.
-     *
-     * @param count
-     */
-    void expandRacMembership(int count);
 }

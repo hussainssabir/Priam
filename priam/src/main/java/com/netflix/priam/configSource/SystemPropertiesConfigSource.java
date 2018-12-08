@@ -35,8 +35,8 @@ public final class SystemPropertiesConfigSource extends AbstractConfigSource {
     private final Map<String, String> data = Maps.newConcurrentMap();
 
     @Override
-    public void initialize(final String asgName, final String region) {
-        super.initialize(asgName, region);
+    public void initialize(final String appid, final String region) {
+        super.initialize(appid, region);
 
         Properties systemProps = System.getProperties();
 

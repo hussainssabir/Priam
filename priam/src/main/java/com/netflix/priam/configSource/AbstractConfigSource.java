@@ -26,12 +26,11 @@ import org.apache.commons.lang3.StringUtils;
 /** Base implementations for most methods on {@link IConfigSource}. */
 public abstract class AbstractConfigSource implements IConfigSource {
 
-    private String asgName;
     private String region;
 
     @Override
-    public void initialize(final String asgName, final String region) {
-        this.asgName = checkNotNull(asgName, "ASG name is not defined");
+    public void initialize(final String appid, final String region) {
+        checkNotNull(appid, "app name is not defined");
         this.region = checkNotNull(region, "Region is not defined");
     }
 
@@ -154,10 +153,6 @@ public abstract class AbstractConfigSource implements IConfigSource {
             return getTrimmedStringList(value.split(","));
         }
         return defaultValue;
-    }
-
-    protected String getAsgName() {
-        return asgName;
     }
 
     protected String getRegion() {
