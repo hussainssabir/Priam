@@ -27,7 +27,6 @@ public class PriamInstance implements Serializable {
     private String hostname;
     private long updatetime;
     private boolean outOfService;
-
     private String app;
     private int Id;
     private String instanceId;
@@ -128,13 +127,5 @@ public class PriamInstance implements Serializable {
 
     public void setUpdatetime(long updatetime) {
         this.updatetime = updatetime;
-    }
-
-    public boolean isOutOfService() {
-        return outOfService;
-    }
-
-    public void setOutOfService(boolean outOfService) {
-        this.outOfService = outOfService;
     }
 }

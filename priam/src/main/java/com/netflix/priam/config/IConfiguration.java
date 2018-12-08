@@ -904,7 +904,7 @@ public interface IConfiguration {
     /**
      * Interval to be used for flush.
      *
-     * @return the interval to run the flush task. Format is name=value where “name” is an enum of
+     * @return the interval to run the flush task. Format is name=value where "name" is an enum of
      *     hour, daily, value is ...
      * @deprecated Use the {{@link #getFlushCronExpression()} instead. This is set for deletion in
      *     Dec 2018.

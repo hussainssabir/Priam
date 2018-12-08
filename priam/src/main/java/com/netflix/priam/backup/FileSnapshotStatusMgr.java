@@ -89,8 +89,16 @@ public class FileSnapshotStatusMgr extends BackupStatusMgr {
 
     @Override
     public void save(BackupMetadata backupMetadata) {
-        File snapshotFile = new File(filename);
-        if (!snapshotFile.exists()) snapshotFile.mkdirs();
+
+        try {
+            File snapshotFile = new File(filename);
+            if (!snapshotFile.exists()) snapshotFile.createNewFile();
+        } catch (IOException e) {
+            logger.error(
+                    "Error while trying to create snapshot status file: {}. Error: {}",
+                    filename,
+                    e.getLocalizedMessage());
+        }
 
         // Will save entire list to file.
         try (final ObjectOutputStream out =

@@ -1,5 +1,6 @@
 /*
- * Copyright 2013 Netflix, Inc.
+ * Copyright 2017 Netflix, Inc.
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -52,7 +53,7 @@ public class TuneCassandra extends Task {
         while (!isDone) {
             try {
                 tuner.writeAllProperties(
-                        config.getYamlLocation(), null, config.getSeedProviderName());
+                        config.getYamlLocation(), config.getHostIP(), config.getSeedProviderName());
                 tuner.updateJVMOptions();
                 isDone = true;
                 instanceState.setYmlWritten(true);

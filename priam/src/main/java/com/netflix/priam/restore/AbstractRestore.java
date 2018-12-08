@@ -239,12 +239,13 @@ public abstract class AbstractRestore extends Task implements IRestoreStrategy {
         instanceState.getRestoreStatus().setEndDateRange(DateUtil.convert(endTime));
         instanceState.getRestoreStatus().setExecutionStartTime(LocalDateTime.now());
         instanceState.setRestoreStatus(Status.STARTED);
-        String origToken = instanceIdentity.getInstance().getToken();
+        String origBackupIdentifier = instanceIdentity.getBackupIdentifier();
 
         try {
             if (config.isRestoreClosestToken()) {
-                restoreToken = tokenSelector.getClosestToken(new BigInteger(origToken), startTime);
-                instanceIdentity.getInstance().setToken(restoreToken.toString());
+                restoreToken =
+                        tokenSelector.getClosestToken(instanceIdentity.getToken(), startTime);
+                instanceIdentity.setBackupIdentifier(restoreToken.toString());
             }
 
             // Stop cassandra if its running
@@ -331,7 +332,7 @@ public abstract class AbstractRestore extends Task implements IRestoreStrategy {
             logger.error("Error while trying to restore: {}", e.getMessage(), e);
             throw e;
         } finally {
-            instanceIdentity.getInstance().setToken(origToken);
+            instanceIdentity.setBackupIdentifier(origBackupIdentifier);
         }
     }
 

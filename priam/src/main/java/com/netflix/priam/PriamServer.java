@@ -48,7 +48,10 @@ import org.slf4j.LoggerFactory;
 public class PriamServer {
     private final PriamScheduler scheduler;
     private final IConfiguration config;
+
+    // Utility class to read the snapshot meta service cron job expression from the config source.
     private final IBackupRestoreConfig backupRestoreConfig;
+
     private final InstanceIdentity instanceIdentity;
     private final Sleeper sleeper;
     private final ICassandraProcess cassProcess;
@@ -88,7 +91,7 @@ public class PriamServer {
         createDirectories();
 
         // Do not start Priam if you are out of service.
-        if (instanceIdentity.getInstance().isOutOfService()) return;
+        if (instanceIdentity.isOutOfService()) return;
 
         // start to schedule jobs
         scheduler.start();

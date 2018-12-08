@@ -34,10 +34,15 @@ public class GuiceJobFactory implements JobFactory {
     }
 
     @Override
+    /**
+     * Generic method to read the list of jobs from the bundle and then create their
+     * respective instances using Google Juice dependency injection tool <code>Ingector</>
+     */
     public Job newJob(TriggerFiredBundle bundle, Scheduler scheduler) throws SchedulerException {
         JobDetail jobDetail = bundle.getJobDetail();
         Class<?> jobClass = jobDetail.getJobClass();
         Job job = (Job) guice.getInstance(jobClass);
+        // This injects all dependencies of the Job object
         guice.injectMembers(job);
         return job;
     }

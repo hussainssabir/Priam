@@ -16,20 +16,17 @@
  */
 package com.netflix.priam.aws;
 
-import com.amazonaws.services.autoscaling.AmazonAutoScaling;
-import com.amazonaws.services.autoscaling.AmazonAutoScalingClientBuilder;
 import com.amazonaws.services.autoscaling.model.*;
-import com.amazonaws.services.autoscaling.model.Instance;
 import com.amazonaws.services.ec2.AmazonEC2;
 import com.amazonaws.services.ec2.AmazonEC2ClientBuilder;
 import com.amazonaws.services.ec2.model.*;
 import com.amazonaws.services.ec2.model.Filter;
-import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import com.netflix.priam.config.IConfiguration;
 import com.netflix.priam.cred.ICredential;
 import com.netflix.priam.identity.IMembership;
+import com.netflix.priam.identity.PriamInstance;
 import com.netflix.priam.identity.config.InstanceInfo;
 import java.util.*;
 import org.apache.commons.lang3.StringUtils;
@@ -37,117 +34,78 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Class to query amazon ASG for its members to provide - Number of valid nodes in the ASG - Number
- * of zones - Methods for adding ACLs for the nodes
+ * Abstract class represent the generic functions required by both ASG and non-ASG based instances -
+ * Number of valid nodes in the cluster - Number of zones - Methods for adding ACLs for the nodes
+ * TODO: How ACL is configured?
  */
-public class AWSMembership implements IMembership {
-    private static final Logger logger = LoggerFactory.getLogger(AWSMembership.class);
-    private final IConfiguration config;
-    private final ICredential provider;
-    private final InstanceInfo instanceInfo;
+public abstract class AbstractAWSMembership implements IMembership {
+    private static final Logger logger = LoggerFactory.getLogger(AbstractAWSMembership.class);
+    protected final IConfiguration config;
+    protected final ICredential thisAccountProvider;
+    protected final InstanceInfo instanceInfo;
     private final ICredential crossAccountProvider;
 
     @Inject
-    public AWSMembership(
+    public AbstractAWSMembership(
             IConfiguration config,
-            ICredential provider,
+            ICredential thisAccountProvider,
             @Named("awsec2roleassumption") ICredential crossAccountProvider,
             InstanceInfo instanceInfo) {
         this.config = config;
-        this.provider = provider;
+        this.thisAccountProvider = thisAccountProvider;
         this.instanceInfo = instanceInfo;
         this.crossAccountProvider = crossAccountProvider;
     }
 
-    @Override
-    public List<String> getRacMembership() {
-        AmazonAutoScaling client = null;
-        try {
-            List<String> asgNames = new ArrayList<>();
-            asgNames.add(instanceInfo.getAutoScalingGroup());
-            asgNames.addAll(Arrays.asList(config.getSiblingASGNames().split("\\s*,\\s*")));
-            client = getAutoScalingClient();
-            DescribeAutoScalingGroupsRequest asgReq =
-                    new DescribeAutoScalingGroupsRequest()
-                            .withAutoScalingGroupNames(
-                                    asgNames.toArray(new String[asgNames.size()]));
-            DescribeAutoScalingGroupsResult res = client.describeAutoScalingGroups(asgReq);
+    protected abstract List<String> getLiveInstances(ICredential provider);
 
-            List<String> instanceIds = Lists.newArrayList();
-            for (AutoScalingGroup asg : res.getAutoScalingGroups()) {
-                for (Instance ins : asg.getInstances())
-                    if (!(ins.getLifecycleState().equalsIgnoreCase("Terminating")
-                            || ins.getLifecycleState().equalsIgnoreCase("shutting-down")
-                            || ins.getLifecycleState().equalsIgnoreCase("Terminated")))
-                        instanceIds.add(ins.getInstanceId());
-            }
-            if (logger.isInfoEnabled()) {
-                logger.info(
-                        String.format(
-                                "Querying Amazon returned following instance in the RAC: %s, ASGs: %s --> %s",
-                                instanceInfo.getRac(),
-                                StringUtils.join(asgNames, ","),
-                                StringUtils.join(instanceIds, ",")));
-            }
-            return instanceIds;
-        } finally {
-            if (client != null) client.shutdown();
-        }
-    }
-
-    /** Actual membership AWS source of truth... */
-    @Override
-    public int getRacMembershipSize() {
-        AmazonAutoScaling client = null;
-        try {
-            client = getAutoScalingClient();
-            DescribeAutoScalingGroupsRequest asgReq =
-                    new DescribeAutoScalingGroupsRequest()
-                            .withAutoScalingGroupNames(instanceInfo.getAutoScalingGroup());
-            DescribeAutoScalingGroupsResult res = client.describeAutoScalingGroups(asgReq);
-            int size = 0;
-            for (AutoScalingGroup asg : res.getAutoScalingGroups()) {
-                size += asg.getMaxSize();
-            }
-            logger.info("Query on ASG returning {} instances", size);
-            return size;
-        } finally {
-            if (client != null) client.shutdown();
-        }
+    protected boolean isInstanceStateLive(String lifecycleState) {
+        return !(lifecycleState.equalsIgnoreCase("Terminating")
+                || lifecycleState.equalsIgnoreCase("shutting-down")
+                || lifecycleState.equalsIgnoreCase("Terminated"));
     }
 
     @Override
-    public List<String> getCrossAccountRacMembership() {
-        AmazonAutoScaling client = null;
-        try {
-            List<String> asgNames = new ArrayList<>();
-            asgNames.add(instanceInfo.getAutoScalingGroup());
-            asgNames.addAll(Arrays.asList(config.getSiblingASGNames().split("\\s*,\\s*")));
-            client = getCrossAccountAutoScalingClient();
-            DescribeAutoScalingGroupsRequest asgReq =
-                    new DescribeAutoScalingGroupsRequest()
-                            .withAutoScalingGroupNames(
-                                    asgNames.toArray(new String[asgNames.size()]));
-            DescribeAutoScalingGroupsResult res = client.describeAutoScalingGroups(asgReq);
-
-            List<String> instanceIds = Lists.newArrayList();
-            for (AutoScalingGroup asg : res.getAutoScalingGroups()) {
-                for (Instance ins : asg.getInstances())
-                    if (!(ins.getLifecycleState().equalsIgnoreCase("Terminating")
-                            || ins.getLifecycleState().equalsIgnoreCase("shutting-down")
-                            || ins.getLifecycleState().equalsIgnoreCase("Terminated")))
-                        instanceIds.add(ins.getInstanceId());
-            }
-            if (logger.isInfoEnabled()) {
-                logger.info(
-                        String.format(
-                                "Querying Amazon returned following instance in the cross-account ASG: %s --> %s",
-                                instanceInfo.getRac(), StringUtils.join(instanceIds, ",")));
-            }
-            return instanceIds;
-        } finally {
-            if (client != null) client.shutdown();
+    public boolean isInstanceAlive(PriamInstance instance) {
+        List<String> instances = getLiveInstances(thisAccountProvider);
+        if (config.isDualAccount()) {
+            instances = getDualAccountLiveInstances(instances);
+        } else {
+            logger.info("Single Account cluster");
         }
+
+        return instances.contains(instance.getInstanceId());
+    }
+
+    private List<String> getDualAccountLiveInstances(List<String> instances) {
+        logger.info("Dual Account cluster");
+
+        List<String> crossAccountInstances = getLiveInstances(crossAccountProvider);
+
+        if (logger.isInfoEnabled()) {
+            if (isClassic()) {
+                logger.info(
+                        "EC2 classic instances (local account): "
+                                + Arrays.toString(instances.toArray()));
+                logger.info(
+                        "VPC Account (cross-account): "
+                                + Arrays.toString(crossAccountInstances.toArray()));
+            } else {
+                logger.info("VPC Account (local account): " + Arrays.toString(instances.toArray()));
+                logger.info(
+                        "EC2 classic instances (cross-account): "
+                                + Arrays.toString(crossAccountInstances.toArray()));
+            }
+        }
+
+        // Remove duplicates (probably there are not)
+        instances.removeAll(crossAccountInstances);
+
+        // Merge the two lists
+        instances.addAll(crossAccountInstances);
+        logger.info("Combined Instances in the AZ: {}", instances);
+
+        return instances;
     }
 
     @Override
@@ -322,44 +280,9 @@ public class AWSMembership implements IMembership {
         }
     }
 
-    @Override
-    public void expandRacMembership(int count) {
-        AmazonAutoScaling client = null;
-        try {
-            client = getAutoScalingClient();
-            DescribeAutoScalingGroupsRequest asgReq =
-                    new DescribeAutoScalingGroupsRequest()
-                            .withAutoScalingGroupNames(instanceInfo.getAutoScalingGroup());
-            DescribeAutoScalingGroupsResult res = client.describeAutoScalingGroups(asgReq);
-            AutoScalingGroup asg = res.getAutoScalingGroups().get(0);
-            UpdateAutoScalingGroupRequest ureq = new UpdateAutoScalingGroupRequest();
-            ureq.setAutoScalingGroupName(asg.getAutoScalingGroupName());
-            ureq.setMinSize(asg.getMinSize() + 1);
-            ureq.setMaxSize(asg.getMinSize() + 1);
-            ureq.setDesiredCapacity(asg.getMinSize() + 1);
-            client.updateAutoScalingGroup(ureq);
-        } finally {
-            if (client != null) client.shutdown();
-        }
-    }
-
-    protected AmazonAutoScaling getAutoScalingClient() {
-        return AmazonAutoScalingClientBuilder.standard()
-                .withCredentials(provider.getAwsCredentialProvider())
-                .withRegion(instanceInfo.getRegion())
-                .build();
-    }
-
-    protected AmazonAutoScaling getCrossAccountAutoScalingClient() {
-        return AmazonAutoScalingClientBuilder.standard()
-                .withCredentials(crossAccountProvider.getAwsCredentialProvider())
-                .withRegion(instanceInfo.getRegion())
-                .build();
-    }
-
     protected AmazonEC2 getEc2Client() {
         return AmazonEC2ClientBuilder.standard()
-                .withCredentials(provider.getAwsCredentialProvider())
+                .withCredentials(thisAccountProvider.getAwsCredentialProvider())
                 .withRegion(instanceInfo.getRegion())
                 .build();
     }

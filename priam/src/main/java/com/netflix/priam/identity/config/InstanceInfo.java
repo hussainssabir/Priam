@@ -91,7 +91,7 @@ public interface InstanceInfo {
 
     /**
      * Get the ASG in which this instance is deployed. Note that Priam requires instances to be
-     * under an ASG.
+     * under an ASG. TODO: fix this comment
      *
      * @return the ASG of the instance. ex: cassandra_app--useast1e
      */

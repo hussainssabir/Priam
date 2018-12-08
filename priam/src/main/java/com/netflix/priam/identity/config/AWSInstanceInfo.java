@@ -88,23 +88,24 @@ public class AWSInstanceInfo implements InstanceInfo {
         return ImmutableList.copyOf(zone);
     }
 
-    public String getPublicHostname() {
-        if (publicHostName == null) {
-            publicHostName =
-                    SystemUtils.getDataFromUrl(
-                            "http://169.254.169.254/latest/meta-data/public-hostname");
-        }
-        return publicHostName;
-    }
-
-    public String getPublicIP() {
-        if (publicIp == null) {
-            publicIp =
-                    SystemUtils.getDataFromUrl(
-                            "http://169.254.169.254/latest/meta-data/public-ipv4");
-        }
-        return publicIp;
-    }
+    // Hussain: This is not required if the Priam is deployed within private subnet
+    //    public String getPublicHostname() {
+    //        if (publicHostName == null) {
+    //            publicHostName =
+    //                    SystemUtils.getDataFromUrl(
+    //                            "http://169.254.169.254/latest/meta-data/public-hostname");
+    //        }
+    //        return publicHostName;
+    //    }
+    //
+    //    public String getPublicIP() {
+    //        if (publicIp == null) {
+    //            publicIp =
+    //                    SystemUtils.getDataFromUrl(
+    //                            "http://169.254.169.254/latest/meta-data/public-ipv4");
+    //        }
+    //        return publicIp;
+    //    }
 
     @Override
     public String getInstanceId() {
@@ -179,6 +180,8 @@ public class AWSInstanceInfo implements InstanceInfo {
     }
 
     @Override
+    // TODO: hussain
+    // This is not suitable for non asg based usecase either create a new method or rename this?
     public String getAutoScalingGroup() {
         final AmazonEC2 client =
                 AmazonEC2ClientBuilder.standard()
@@ -195,7 +198,7 @@ public class AWSInstanceInfo implements InstanceInfo {
                     for (Reservation resr : res.getReservations()) {
                         for (Instance ins : resr.getInstances()) {
                             for (com.amazonaws.services.ec2.model.Tag tag : ins.getTags()) {
-                                if (tag.getKey().equals("aws:autoscaling:groupName"))
+                                if (tag.getKey().equals("cassandra:cluster-name"))
                                     return tag.getValue();
                             }
                         }
@@ -221,11 +224,15 @@ public class AWSInstanceInfo implements InstanceInfo {
 
     @Override
     public String getHostname() {
-        return (getPublicHostname() == null) ? getPrivateIP() : getPublicHostname();
+        // Hussain: Updated to remove the dependency on public IP
+        return getPrivateIP();
     }
 
     @Override
     public String getHostIP() {
-        return (getPublicIP() == null) ? getPrivateIP() : getPublicIP();
+        // Hussain: Updated to remove the dependency on public IP
+        // Changing this to private for the development purpose, will be fix once the instance will
+        // be in private subnet
+        return getPrivateIP();
     }
 }

@@ -18,9 +18,7 @@ package com.netflix.priam.defaultimpl;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.name.Names;
-import com.netflix.priam.aws.S3CrossAccountFileSystem;
-import com.netflix.priam.aws.S3EncryptedFileSystem;
-import com.netflix.priam.aws.S3FileSystem;
+import com.netflix.priam.aws.*;
 import com.netflix.priam.aws.auth.EC2RoleAssumptionCredential;
 import com.netflix.priam.aws.auth.IS3Credential;
 import com.netflix.priam.aws.auth.S3RoleAssumptionCredential;
@@ -32,6 +30,7 @@ import com.netflix.priam.cryptography.pgp.PgpCredential;
 import com.netflix.priam.cryptography.pgp.PgpCryptography;
 import com.netflix.priam.google.GcsCredential;
 import com.netflix.priam.google.GoogleEncryptedFileSystem;
+import com.netflix.priam.identity.IMembership;
 import com.netflix.spectator.api.NoopRegistry;
 import com.netflix.spectator.api.Registry;
 import org.quartz.SchedulerFactory;
@@ -58,6 +57,14 @@ public class PriamGuiceModule extends AbstractModule {
         bind(ICredential.class)
                 .annotatedWith(Names.named("awsec2roleassumption"))
                 .to(EC2RoleAssumptionCredential.class);
+        bind(ICredential.class).to(IAMCredential.class);
+
+        // If ASG based is used change this to ASGMembership.class
+        // However, for TA we would not be running in ASG, so default it to Instance based.
+        // NOTE: A better approach would be to set a system property and read it here
+
+        bind(IMembership.class).to(EC2InstanceMembership.class);
+
         bind(IFileCryptography.class)
                 .annotatedWith(Names.named("filecryptoalgorithm"))
                 .to(PgpCryptography.class);

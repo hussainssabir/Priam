@@ -91,7 +91,7 @@ public class MetaFileWriterBuilder {
             this.backupFileSystem = backupFileSystemCtx.getFileStrategy(configuration);
             this.metaFileManager = metaFileManager;
             List<String> backupIdentifier = new ArrayList<>();
-            backupIdentifier.add(instanceIdentity.getInstance().getToken());
+            backupIdentifier.add(instanceIdentity.getToken());
             metaFileInfo =
                     new MetaFileInfo(
                             configuration.getAppName(),

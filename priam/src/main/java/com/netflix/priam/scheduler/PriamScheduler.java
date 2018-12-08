@@ -28,8 +28,10 @@ import org.slf4j.LoggerFactory;
 @Singleton
 public class PriamScheduler {
     private static final Logger logger = LoggerFactory.getLogger(PriamScheduler.class);
+    // Quartz Scheduler
     private final Scheduler scheduler;
     private final GuiceJobFactory jobFactory;
+    // Utility Sleeper class, uses Thread.sleep
     private final Sleeper sleeper;
 
     @Inject
@@ -44,7 +46,12 @@ public class PriamScheduler {
         this.sleeper = sleeper;
     }
 
-    /** Add a task to the scheduler */
+    /**
+     * Add a task to the scheduler
+     *
+     * <p>A generic method that takes the task name and class and schedules the task as per the
+     * supplied timer object.
+     */
     public void addTask(String name, Class<? extends Task> taskclass, TaskTimer timer)
             throws SchedulerException, ParseException {
         assert timer != null : "Cannot add scheduler task " + name + " as no timer is set";

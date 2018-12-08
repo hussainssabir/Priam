@@ -45,7 +45,7 @@ public class PrefixGenerator {
                 configuration.getBackupLocation(),
                 configuration.getBackupPrefix(),
                 getAppNameReverse(),
-                instanceIdentity.getInstance().getToken());
+                instanceIdentity.getToken());
     }
 
     public Path getSSTPrefix() {

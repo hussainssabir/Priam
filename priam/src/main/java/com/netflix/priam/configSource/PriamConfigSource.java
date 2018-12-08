@@ -29,9 +29,10 @@ public class PriamConfigSource extends CompositeConfigSource {
             final SimpleDBConfigSource simpleDBConfigSource,
             final PropertiesConfigSource propertiesConfigSource,
             final SystemPropertiesConfigSource systemPropertiesConfigSource) {
-        // this order was based off PriamConfigurations loading.  W/e loaded last could override,
-        // but with Composite, first
-        // has the highest priority.
-        super(simpleDBConfigSource, propertiesConfigSource, systemPropertiesConfigSource);
+        // As per design of the CompositeConfigSource i.e. PriamConfigSource
+        // Given property give will be searched in the order as mentioned here.
+        // So the property will be searched in SDB and if found will be return, else the loop
+        // will continue with the next ConfigSource. i.e. propertiesConfigSource etc
+        super(simpleDBConfigSource, systemPropertiesConfigSource, propertiesConfigSource);
     }
 }

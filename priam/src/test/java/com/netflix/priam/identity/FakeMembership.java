@@ -33,13 +33,8 @@ public class FakeMembership implements IMembership {
     }
 
     @Override
-    public List<String> getRacMembership() {
-        return instances;
-    }
-
-    @Override
-    public List<String> getCrossAccountRacMembership() {
-        return null;
+    public boolean isInstanceAlive(PriamInstance instance) {
+        return instances.contains(instance.getInstanceId());
     }
 
     @Override
@@ -68,11 +63,5 @@ public class FakeMembership implements IMembership {
     public List<String> listACL(int from, int to) {
         // TODO Auto-generated method stub
         return null;
-    }
-
-    @Override
-    public void expandRacMembership(int count) {
-        // TODO Auto-generated method stub
-
     }
 }

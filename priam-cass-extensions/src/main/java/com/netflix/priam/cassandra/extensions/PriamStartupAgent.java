@@ -41,14 +41,21 @@ public class PriamStartupAgent {
         String token = null;
         String seeds = null;
         boolean isReplace = false;
+        boolean isExternallyDefinedToken = false;
         String replacedIp = "";
         String extraEnvParams = null;
 
         while (true) {
             try {
-                token =
-                        DataFetcher.fetchData(
-                                "http://127.0.0.1:8080/Priam/REST/v1/cassconfig/get_token");
+                isExternallyDefinedToken =
+                        Boolean.parseBoolean(
+                                DataFetcher.fetchData(
+                                        "http://127.0.0.1:8080/Priam/REST/v1/cassconfig/is_externally_defined_token"));
+                if (isExternallyDefinedToken) {
+                    token =
+                            DataFetcher.fetchData(
+                                    "http://127.0.0.1:8080/Priam/REST/v1/cassconfig/get_token");
+                }
                 seeds =
                         DataFetcher.fetchData(
                                 "http://127.0.0.1:8080/Priam/REST/v1/cassconfig/get_seeds");
@@ -69,7 +76,7 @@ public class PriamStartupAgent {
                 e.printStackTrace();
             }
 
-            if (token != null && seeds != null) break;
+            if ((token != null || !isExternallyDefinedToken) && seeds != null) break;
             try {
                 Thread.sleep(5 * 1000);
             } catch (InterruptedException e1) {
@@ -77,7 +84,9 @@ public class PriamStartupAgent {
             }
         }
 
-        System.setProperty("cassandra.initial_token", token);
+        if (isExternallyDefinedToken) {
+            System.setProperty("cassandra.initial_token", token);
+        }
 
         setExtraEnvParams(extraEnvParams);
 
@@ -87,7 +96,9 @@ public class PriamStartupAgent {
             if (FBUtilities.getReleaseVersionString().compareTo(REPLACED_ADDRESS_MIN_VER) < 0) {
                 System.setProperty("cassandra.replace_token", token);
             } else {
-                System.setProperty("cassandra.replace_address", replacedIp);
+                if (StringUtils.isNotBlank(replacedIp)) {
+                    System.setProperty("cassandra.replace_address", replacedIp);
+                }
             }
         }
     }
