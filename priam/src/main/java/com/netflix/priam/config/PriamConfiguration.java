@@ -38,6 +38,9 @@ public class PriamConfiguration implements IConfiguration {
 
     private final IConfigSource config;
     private static final Logger logger = LoggerFactory.getLogger(PriamConfiguration.class);
+    private static final String CONFIG_VNODE_NUM_TOKENS = PRIAM_PRE + ".vnodes.numTokens";
+    private final int DEFAULT_VNODE_NUM_TOKENS = 1;
+    private static final String CONFIG_SEEDS = PRIAM_PRE + ".seeds";
 
     @JsonIgnore private InstanceInfo instanceInfo;
 
@@ -49,7 +52,13 @@ public class PriamConfiguration implements IConfiguration {
 
     @Override
     public void initialize() {
-        this.config.initialize(instanceInfo.getAutoScalingGroup(), instanceInfo.getRegion());
+        // TODO: set appId to some string for local testing, this should be clusterId
+        String ASG_NAME = instanceInfo.getAutoScalingGroup();
+        String appid =
+                ASG_NAME.lastIndexOf('-') > 0
+                        ? ASG_NAME.substring(0, ASG_NAME.indexOf('-'))
+                        : ASG_NAME;
+        this.config.initialize(appid, instanceInfo.getRegion());
     }
 
     @Override
@@ -183,12 +192,12 @@ public class PriamConfiguration implements IConfiguration {
 
     @Override
     public String getSnitch() {
-        return config.get(PRIAM_PRE + ".endpoint_snitch", "org.apache.cassandra.locator.Ec2Snitch");
+        return config.get(PRIAM_PRE + ".endpoint_snitch", "Ec2Snitch");
     }
 
     @Override
     public String getAppName() {
-        return config.get(PRIAM_PRE + ".clustername", "cass_cluster");
+        return config.get(PRIAM_PRE + ".clustername", "ta_cass_cluster");
     }
 
     @Override
@@ -213,6 +222,10 @@ public class PriamConfiguration implements IConfiguration {
                 (PRIAM_PRE + ".direct.memory.size.") + instanceInfo.getInstanceType(), "50G");
     }
 
+    public String getHostIP() {
+        return instanceInfo.getHostIP();
+    }
+
     @Override
     public int getBackupHour() {
         return config.get(PRIAM_PRE + ".backup.hour", 12);
@@ -227,7 +240,7 @@ public class PriamConfiguration implements IConfiguration {
     public SchedulerType getBackupSchedulerType() throws UnsupportedTypeException {
         String schedulerType =
                 config.get(
-                        PRIAM_PRE + ".backup.schedule.type", SchedulerType.HOUR.getSchedulerType());
+                        PRIAM_PRE + ".backup.schedule.type", SchedulerType.CRON.getSchedulerType());
         return SchedulerType.lookup(schedulerType);
     }
 
@@ -385,6 +398,11 @@ public class PriamConfiguration implements IConfiguration {
     }
 
     @Override
+    public List<String> getSeeds() {
+        return config.getList(CONFIG_SEEDS);
+    }
+
+    @Override
     public String getSeedProviderName() {
         return config.get(
                 PRIAM_PRE + ".seed.provider",
@@ -425,6 +443,11 @@ public class PriamConfiguration implements IConfiguration {
         return config.get(PRIAM_PRE + ".cass.process", "CassandraDaemon");
     }
 
+    @Override
+    public int getNumTokens() {
+        return config.get(CONFIG_VNODE_NUM_TOKENS, DEFAULT_VNODE_NUM_TOKENS);
+    }
+
     public String getYamlLocation() {
         return config.get(PRIAM_PRE + ".yamlLocation", getCassHome() + "/conf/cassandra.yaml");
     }
@@ -436,12 +459,12 @@ public class PriamConfiguration implements IConfiguration {
 
     public String getAuthenticator() {
         return config.get(
-                PRIAM_PRE + ".authenticator", "org.apache.cassandra.auth.AllowAllAuthenticator");
+                PRIAM_PRE + ".authenticator", "org.apache.cassandra.auth.PasswordAuthenticator");
     }
 
     public String getAuthorizer() {
         return config.get(
-                PRIAM_PRE + ".authorizer", "org.apache.cassandra.auth.AllowAllAuthorizer");
+                PRIAM_PRE + ".authorizer", "org.apache.cassandra.auth.CassandraAuthorizer");
     }
 
     @Override
@@ -504,11 +527,11 @@ public class PriamConfiguration implements IConfiguration {
     }
 
     public boolean isThriftEnabled() {
-        return config.get(PRIAM_PRE + ".thrift.enabled", true);
+        return config.get(PRIAM_PRE + ".thrift.enabled", false);
     }
 
     public boolean isNativeTransportEnabled() {
-        return config.get(PRIAM_PRE + ".nativeTransport.enabled", false);
+        return config.get(PRIAM_PRE + ".nativeTransport.enabled", true);
     }
 
     public int getConcurrentReadsCnt() {

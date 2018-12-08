@@ -17,10 +17,7 @@
 package com.netflix.priam.identity;
 
 import com.google.common.base.Predicate;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.ListMultimap;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Multimaps;
+import com.google.common.collect.*;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.netflix.priam.config.IConfiguration;
@@ -36,6 +33,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -88,6 +86,8 @@ public class InstanceIdentity {
             };
 
     private PriamInstance myInstance;
+    private String backupIdentifier;
+    private boolean outOfService = false;
     // Instance information contains other information like ASG/vpc-id etc.
     private InstanceInfo myInstanceInfo;
     private boolean isReplace = false;
@@ -123,7 +123,7 @@ public class InstanceIdentity {
         init();
     }
 
-    public PriamInstance getInstance() {
+    PriamInstance getInstance() {
         return myInstance;
     }
 
@@ -144,7 +144,7 @@ public class InstanceIdentity {
                             logger.info(
                                     "[Dead] Iterating though the hosts: {}", ins.getInstanceId());
                             if (ins.getInstanceId().equals(myInstanceInfo.getInstanceId())) {
-                                ins.setOutOfService(true);
+                                outOfService = true;
                                 logger.info(
                                         "[Dead]  found that this node is dead."
                                                 + " application: {}"
@@ -280,6 +280,12 @@ public class InstanceIdentity {
         }
 
         logger.info("My token: {}", myInstance.getToken());
+
+        if (myInstance.getToken() == null || myInstance.getToken().isEmpty()) {
+            backupIdentifier = "virual" + Integer.toString(myInstance.getId());
+        } else {
+            backupIdentifier = myInstance.getToken();
+        }
     }
 
     private void populateRacMap() {
@@ -291,6 +297,9 @@ public class InstanceIdentity {
     }
 
     public List<String> getSeeds() throws UnknownHostException {
+        if (config.getSeeds().size() > 0) {
+            return config.getSeeds();
+        }
         populateRacMap();
         List<String> seeds = new LinkedList<>();
         // Handle single zone deployment
@@ -313,7 +322,9 @@ public class InstanceIdentity {
         }
         for (String loc : locMap.keySet()) {
             PriamInstance instance =
-                    Iterables.tryFind(locMap.get(loc), differentHostPredicate).orNull();
+                    FluentIterable.from(locMap.get(loc))
+                            .firstMatch(differentHostPredicate)
+                            .orNull();
             if (instance != null && !isInstanceDummy(instance)) {
                 if (config.isMultiDC()) seeds.add(instance.getHostIP());
                 else seeds.add(instance.getHostName());
@@ -347,5 +358,37 @@ public class InstanceIdentity {
 
     private static boolean isInstanceDummy(PriamInstance instance) {
         return instance.getInstanceId().equals(DUMMY_INSTANCE_ID);
+    }
+
+    public boolean isOutOfService() {
+        return outOfService;
+    }
+
+    public String getBackupIdentifier() {
+        return backupIdentifier;
+    }
+
+    public void setBackupIdentifier(String backupIdentifier) {
+        this.backupIdentifier = backupIdentifier;
+    }
+
+    public String getToken() {
+        return myInstance.getToken();
+    }
+
+    public String getInstanceId() {
+        return myInstance.getInstanceId();
+    }
+
+    public String getHostIP() {
+        return myInstance.getHostIP();
+    }
+
+    public String getHostName() {
+        return myInstance.getHostName();
+    }
+
+    public boolean isExternallyDefinedToken() {
+        return StringUtils.isNotBlank(getToken());
     }
 }

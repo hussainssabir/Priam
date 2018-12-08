@@ -17,21 +17,20 @@
 
 package com.netflix.priam.config;
 
+import com.google.common.collect.Lists;
 import com.google.inject.Singleton;
 import java.io.File;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Singleton
 public class FakeConfiguration implements IConfiguration {
 
     private final String appName;
     private String restorePrefix = "";
-    public Map<String, Object> fakeConfig;
-
+    public int numTokens;
     public final Map<String, String> fakeProperties = new HashMap<>();
+    public List<String> seeds;
+    public Map<String, Object> fakeConfig;
 
     public FakeConfiguration() {
         this("my_fake_cluster");
@@ -39,6 +38,8 @@ public class FakeConfiguration implements IConfiguration {
 
     public FakeConfiguration(String appName) {
         this.appName = appName;
+        this.numTokens = 1;
+        this.seeds = new ArrayList<>();
         fakeConfig = new HashMap<>();
         fakeConfig.put("auto_bootstrap", false);
     }
@@ -52,17 +53,20 @@ public class FakeConfiguration implements IConfiguration {
     }
 
     @Override
-    public boolean getAutoBoostrap() {
-        return (Boolean) fakeConfig.getOrDefault("auto_bootstrap", false);
-    }
-
-    @Override
     public String getCassHome() {
         return "/tmp/priam";
     }
 
     @Override
-    public void initialize() {}
+    public void initialize() {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public boolean getAutoBoostrap() {
+        return (Boolean) fakeConfig.getOrDefault("auto_bootstrap", false);
+    }
 
     @Override
     public String getBackupLocation() {
@@ -75,8 +79,23 @@ public class FakeConfiguration implements IConfiguration {
     }
 
     @Override
-    public String getCassandraBaseDirectory() {
-        return "target";
+    public String getCommitLogLocation() {
+        return "cass/commitlog";
+    }
+
+    @Override
+    public String getDataFileLocation() {
+        return "target/data";
+    }
+
+    @Override
+    public String getLogDirLocation() {
+        return null;
+    }
+
+    @Override
+    public String getCacheLocation() {
+        return "cass/caches";
     }
 
     @Override
@@ -120,6 +139,11 @@ public class FakeConfiguration implements IConfiguration {
     }
 
     @Override
+    public List<String> getSeeds() {
+        return seeds;
+    }
+
+    @Override
     public String getSeedProviderName() {
         return "org.apache.cassandra.locator.SimpleSeedProvider";
     }
@@ -129,15 +153,16 @@ public class FakeConfiguration implements IConfiguration {
         return 5;
     }
 
+    @Override
+    public List<String> getBackupRacs() {
+        return Lists.newArrayList();
+    }
+
     public String getYamlLocation() {
         return "conf/cassandra.yaml";
     }
 
     @Override
-    public String getJVMOptionsFileLocation() {
-        return "src/test/resources/conf/jvm.options";
-    }
-
     public String getCommitLogBackupPropsFile() {
         return getCassHome() + "/conf/commitlog_archiving.properties";
     }
@@ -172,7 +197,16 @@ public class FakeConfiguration implements IConfiguration {
     }
 
     @Override
+    public String getHostIP() {
+        return null;
+    }
+
+    @Override
     public String getMergedConfigurationDirectory() {
         return fakeProperties.getOrDefault("priam_test_config", "/tmp/priam_test_config");
+    }
+
+    public int getNumTokens() {
+        return numTokens;
     }
 }

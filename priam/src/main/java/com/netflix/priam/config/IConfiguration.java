@@ -237,7 +237,7 @@ public interface IConfiguration {
 
     /** @return Cluster name */
     default String getAppName() {
-        return "cass_cluster";
+        return "ta_cass_cluster";
     }
 
     /** @return List of all RAC used for the cluster */
@@ -474,6 +474,9 @@ public interface IConfiguration {
         return true;
     }
 
+    /** @return Gets the number of tokens assigned to the node when using virtual nodes. */
+    public int getNumTokens();
+
     /** @return Bytes per second to throttle for backups */
     default int getUploadThrottle() {
         return -1;
@@ -508,6 +511,9 @@ public interface IConfiguration {
     default String getBootClusterName() {
         return StringUtils.EMPTY;
     }
+
+    /** @return Get a static list of seeds to provide */
+    public List<String> getSeeds();
 
     /** @return Get the name of seed provider */
     default String getSeedProviderName() {
@@ -564,12 +570,12 @@ public interface IConfiguration {
 
     /** Defaults to 'allow all'. */
     default String getAuthenticator() {
-        return "org.apache.cassandra.auth.AllowAllAuthenticator";
+        return "org.apache.cassandra.auth.PasswordAuthenticator";
     }
 
     /** Defaults to 'allow all'. */
     default String getAuthorizer() {
-        return "org.apache.cassandra.auth.AllowAllAuthorizer";
+        return "org.apache.cassandra.auth.CassandraAuthorizer";
     }
 
     /** @return true/false, if Cassandra needs to be started manually */
@@ -1084,4 +1090,6 @@ public interface IConfiguration {
      * @return The result for the property, or the defaultValue if provided (null otherwise)
      */
     String getProperty(String key, String defaultValue);
+
+    String getHostIP();
 }
